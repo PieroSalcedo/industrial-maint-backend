@@ -1,0 +1,11 @@
+package com.maint.industrial_backend.service;
+
+import com.maint.industrial_backend.entity.TicketMantenimiento;
+
+import java.util.List;
+
+public interface TicketService {
+
+    public abstract TicketMantenimiento registraTicket(TicketMantenimiento obj);
+    public abstract List<TicketMantenimiento> consultaDinamica(String desc, int idActivo, int idPrioridad, int idEstado);
+}

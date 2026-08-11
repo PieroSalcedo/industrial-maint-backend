@@ -9,7 +9,8 @@ import lombok.*;
 @Entity
 @Table(name = "data_catalogo")
 public class DataCatalogo {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_data_catalogo")
     private Integer idDataCatalogo;
     private String descripcion;

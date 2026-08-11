@@ -18,7 +18,7 @@ import java.util.Map;
 
 @CommonsLog
 @Tag(name = "02. Activos", description = "CRUD y Consultas de Maquinaria Industrial")
-@SecurityRequirement(name = "bearerAuth") // Esto habilita el candado en Swagger
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/url/activo")
 @CrossOrigin(origins = AppSettings.URL_CROSS_ORIGIN)
@@ -36,13 +36,36 @@ public class ActivoController {
     @Operation(summary = "Registrar nuevo activo", description = "Crea un equipo en la base de datos con auditoría inicial.")
     @PostMapping("/registraActivo")
     public ResponseEntity<Map<String, Object>> registra(@RequestBody Activo obj) {
+        log.info(">>> registraActivo >>> " + obj.getNombre());
         Map<String, Object> salida = new HashMap<>();
         try {
-            obj.setIdActivo(0);
+            obj.setIdActivo(0); // Forzamos creación
             Activo objSalida = activoService.insertaActualizaActivo(obj);
             salida.put("mensaje", "Activo '" + objSalida.getNombre() + "' registrado correctamente.");
         } catch (Exception e) {
+            log.error("Error en registro: " + e.getMessage());
             salida.put("mensaje", "Error: " + e.getMessage());
+        }
+        return ResponseEntity.ok(salida);
+    }
+
+    @Operation(summary = "Actualizar activo existente", description = "Actualiza los datos de un equipo. Se requiere el ID del activo.")
+    @PutMapping("/actualizaActivo")
+    public ResponseEntity<Map<String, Object>> actualiza(@RequestBody Activo obj) {
+        log.info(">>> actualizaActivo >>> ID: " + obj.getIdActivo());
+        Map<String, Object> salida = new HashMap<>();
+        try {
+            // Validamos que el ID exista para no crear uno nuevo por error
+            if (obj.getIdActivo() == null || obj.getIdActivo() == 0) {
+                salida.put("mensaje", "Error: ID de activo no válido.");
+                return ResponseEntity.badRequest().body(salida);
+            }
+
+            Activo objSalida = activoService.insertaActualizaActivo(obj);
+            salida.put("mensaje", "Activo '" + objSalida.getNombre() + "' actualizado correctamente.");
+        } catch (Exception e) {
+            log.error("Error en actualización: " + e.getMessage());
+            salida.put("mensaje", "Error al actualizar: " + e.getMessage());
         }
         return ResponseEntity.ok(salida);
     }
@@ -55,13 +78,15 @@ public class ActivoController {
             @Parameter(description = "ID del Tipo (DataCatalogo)") @RequestParam(defaultValue = "-1") int vtipo,
             @Parameter(description = "Estado (1: Activo, 0: Inactivo)") @RequestParam(defaultValue = "-1") int vestado){
 
+        log.info(">>> consultaDinamica Activo >>> nombre: " + vnombre);
         List<Activo> lista = activoService.consultaDinamica("%" + vnombre.toLowerCase() + "%", vserie, vtipo, vestado);
         return ResponseEntity.ok(lista);
     }
 
-    @Operation(summary = "Eliminar activo", description = "Borrado físico o lógico del equipo por su ID.")
+    @Operation(summary = "Eliminar activo", description = "Borrado físico del equipo por su ID.")
     @DeleteMapping("/eliminaActivo/{id}")
     public ResponseEntity<Map<String, Object>> elimina(@PathVariable int id) {
+        log.info(">>> eliminaActivo >>> ID: " + id);
         Map<String, Object> salida = new HashMap<>();
         try {
             activoService.eliminaActivo(id);

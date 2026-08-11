@@ -50,24 +50,45 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.cors(cors -> {})
+        http
+                // 1. Configuración de CORS Profesional
+                .cors(cors -> cors.configurationSource(request -> {
+                    var corsConfiguration = new org.springframework.web.cors.CorsConfiguration();
+                    corsConfiguration.setAllowedOrigins(java.util.List.of("http://localhost:4200"));
+                    corsConfiguration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                    corsConfiguration.setAllowedHeaders(java.util.List.of("*"));
+                    corsConfiguration.setAllowCredentials(true);
+                    return corsConfiguration;
+                }))
+
+                // 2. Desactivar CSRF para APIs Stateless
                 .csrf(csrf -> csrf.disable())
+
+                // 3. Manejo de errores de autenticación
                 .exceptionHandling(exp -> exp.authenticationEntryPoint(jwtEntryPoint))
+
+                // 4. Gestión de sesión sin estado
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // 5. REGLAS DE AUTORIZACIÓN
                 .authorizeHttpRequests(auth -> auth
-                        // 1. Rutas de Autenticación y Utilidades
+                        // Rutas Públicas (Auth y Util)
                         .requestMatchers("/url/auth/**").permitAll()
                         .requestMatchers("/url/util/**").permitAll()
 
-                        // 2. DESBLOQUEO DE SWAGGER / OPENAPI (Vital para Spring Boot 3)
-                        .requestMatchers("/v3/api-docs/**").permitAll()   // Datos JSON de la API
-                        .requestMatchers("/swagger-ui/**").permitAll()    // Interfaz gráfica de Swagger
-                        .requestMatchers("/swagger-ui.html").permitAll() // Acceso directo
+                        // DESBLOQUEO DE SWAGGER / OPENAPI
+                        .requestMatchers("/v3/api-docs/**").permitAll()   // Definición JSON
+                        .requestMatchers("/swagger-ui/**").permitAll()    // Recursos UI
+                        .requestMatchers("/swagger-ui.html").permitAll() // Redirección principal
 
-                        // 3. El resto de la API requiere Token
+                        // RESTRICCIÓN DE ELIMINACIÓN: Solo ADMIN puede borrar activos
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/url/activo/**").hasAuthority("ROLE_ADMIN")
+
+                        // El resto de la API requiere autenticación
                         .anyRequest().authenticated()
                 );
 
+        // 6. Inyectar Provider y Filtro JWT
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 

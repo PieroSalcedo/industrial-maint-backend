@@ -41,7 +41,7 @@ CREATE SCHEMA public;
 | Usuario | Contraseña | Rol |
 |---------|------------|-----|
 | `admin` | `admin2026` | `ROLE_ADMIN` |
-| `tecnico` | `tecnico2026` | `ROLE_TECNICO` |
+| `tecnico` | `tecnico2026` | `ROLE_TECH` |
 
 ## Regenerar contraseñas BCrypt
 

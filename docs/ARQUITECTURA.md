@@ -189,7 +189,7 @@ Detalle completo en [MODELO-DATOS.md](./MODELO-DATOS.md).
 ```
 Usuario → Roles → Opciones de menú
          ↓
-    Spring Security Authorities (ROLE_ADMIN, ROLE_TECNICO)
+    Spring Security Authorities (ROLE_ADMIN, ROLE_TECH)
 ```
 
 - **RBAC** (Role-Based Access Control): permisos por rol

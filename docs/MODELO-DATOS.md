@@ -191,7 +191,7 @@ sequenceDiagram
 
 ### Permisos por rol
 
-| Acción | ROLE_ADMIN | ROLE_TECNICO |
+| Acción | ROLE_ADMIN | ROLE_TECH |
 |--------|------------|--------------|
 | Ver activos y tickets | Sí | Sí |
 | Crear / editar activos | Sí | Sí |

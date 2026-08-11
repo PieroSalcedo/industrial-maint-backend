@@ -5,7 +5,12 @@ API REST del sistema **MaintPro Industrial OS**, plataforma para la **gestión d
 > **Repositorio backend:** [industrial-maint-backend](https://github.com/PieroSalcedo/industrial-maint-backend)  
 > **Repositorio frontend:** [industrial-maint-frontend](https://github.com/PieroSalcedo/industrial-maint-frontend)  
 > **Frontend requerido:** Angular 22 en `http://localhost:4200`  
-> **Base de datos:** PostgreSQL — `industrial_db`
+> **Base de datos:** PostgreSQL — `industrial_db` (scripts en [`db/`](db/README.md))
+
+**Documentación adicional:**
+- [Modelo de datos](docs/MODELO-DATOS.md) — ER, catálogos, roles y opciones
+- [Arquitectura](docs/ARQUITECTURA.md) — requerimientos, diseño y flujos
+- [Scripts SQL](db/README.md) — instalación de la base de datos
 
 ---
 
@@ -198,10 +203,11 @@ Documentación interactiva disponible en:
 ## Cómo levantar el stack completo
 
 ```text
-1. PostgreSQL corriendo con la BD industrial_db
-2. Backend:  cd industrial-backend → configurar .env → mvn spring-boot:run  (:8080)
-3. Frontend: cd industrial-frontend → npm install → npm start         (:4200)
-4. Abrir:    http://localhost:4200/login
+1. PostgreSQL activo
+2. Base de datos: ejecutar db/00_create_database.sql → schema.sql → seed.sql
+3. Backend:  cd industrial-backend → configurar .env → mvn spring-boot:run  (:8080)
+4. Frontend: cd industrial-frontend → npm install → npm start         (:4200)
+5. Abrir:    http://localhost:4200/login
 ```
 
 ---
@@ -215,7 +221,19 @@ git clone https://github.com/PieroSalcedo/industrial-maint-backend.git
 cd industrial-maint-backend
 ```
 
-### 2. Configurar variables de entorno
+### 2. Crear la base de datos
+
+Ejecutar los scripts SQL en orden (pgAdmin o psql):
+
+```bash
+psql -U postgres -f db/00_create_database.sql
+psql -U postgres -d industrial_db -f db/schema.sql
+psql -U postgres -d industrial_db -f db/seed.sql
+```
+
+Ver detalle en [`db/README.md`](db/README.md).
+
+### 3. Configurar variables de entorno
 
 Copiar el archivo de ejemplo y editar con tus credenciales de PostgreSQL:
 
@@ -235,7 +253,7 @@ DB_PASSWORD=tu_password
 
 > **Importante:** El archivo `.env` no se sube al repositorio. Solo se versiona `.env.example`.
 
-### 3. Compilar y ejecutar
+### 4. Compilar y ejecutar
 
 Con Maven instalado:
 
@@ -257,7 +275,7 @@ Linux / macOS:
 
 La API quedará disponible en **http://localhost:8080/url**.
 
-### 4. Verificar que funciona
+### 5. Verificar que funciona
 
 ```bash
 # Catálogos (público, sin token)
@@ -274,6 +292,16 @@ curl -X POST http://localhost:8080/url/auth/login \
 ## Estructura del proyecto
 
 ```
+db/
+├── 00_create_database.sql              # Crear BD industrial_db
+├── schema.sql                          # DDL unificado (tablas)
+├── seed.sql                            # Datos demo (catálogos, usuarios, etc.)
+└── README.md                           # Guía de instalación SQL
+
+docs/
+├── MODELO-DATOS.md                     # ER, catálogos, roles, opciones
+└── ARQUITECTURA.md                     # Requerimientos y diseño del sistema
+
 src/main/java/com/maint/industrial_backend/
 ├── IndustrialBackendApplication.java   # Punto de entrada
 ├── config/

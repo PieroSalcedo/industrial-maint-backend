@@ -9,10 +9,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 public class EncoderPassword {
     public static void main(String[] args) {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        String password = "tecnico2026";
-        String encodedPassword = encoder.encode(password);
+        String[] passwords = {"admin2026", "tecnico2026"};
 
-        System.out.println("Clave original: " + password);
-        System.out.println("Clave cifrada para SQL: " + encodedPassword);
+        for (String password : passwords) {
+            System.out.println("Clave original: " + password);
+            System.out.println("Clave cifrada para SQL: " + encoder.encode(password));
+            System.out.println("---");
+        }
     }
 }

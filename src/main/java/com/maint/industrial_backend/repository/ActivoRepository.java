@@ -8,9 +8,12 @@ import java.util.List;
 
 public interface ActivoRepository extends JpaRepository<Activo, Integer> {
 
-    // Aplicamos LOWER para que la búsqueda por nombre sea case-insensitive (ignore mayúsculas).
-    // La lógica (?X = -1 or ...) permite que el parámetro sea opcional.
-    // Si desde el controller llega -1, la condición se anula y el filtro no afecta el resultado.
+    @Query("select count(a) > 0 from Activo a where trim(a.numeroSerie) = ?1")
+    boolean existsByNumeroSerieNormalizado(String numeroSerie);
+
+    @Query("select count(a) > 0 from Activo a where trim(a.numeroSerie) = ?1 and a.idActivo <> ?2")
+    boolean existsByNumeroSerieNormalizadoAndIdActivoNot(String numeroSerie, Integer idActivo);
+
     @Query("select a from Activo a where " +
             "(LOWER(a.nombre) like ?1) and " +
             "(?2 = '-1' or a.numeroSerie = ?2) and " +

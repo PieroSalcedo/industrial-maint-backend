@@ -1,21 +1,23 @@
 package com.maint.industrial_backend.controller;
 
-import com.maint.industrial_backend.entity.Activo;
+import com.maint.industrial_backend.dto.ActivoCreateRequestDTO;
+import com.maint.industrial_backend.dto.ActivoResponseDTO;
+import com.maint.industrial_backend.dto.ActivoUpdateRequestDTO;
+import com.maint.industrial_backend.dto.MensajeDTO;
+import com.maint.industrial_backend.mapper.ActivoMapper;
 import com.maint.industrial_backend.service.ActivoService;
 import com.maint.industrial_backend.util.AppSettings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.extern.apachecommons.CommonsLog;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @CommonsLog
 @Tag(name = "02. Activos", description = "CRUD y Consultas de Maquinaria Industrial")
@@ -28,75 +30,57 @@ public class ActivoController {
     @Autowired
     private ActivoService activoService;
 
-    @Operation(summary = "Listar todos los activos", description = "Retorna una lista completa de equipos sin filtros.")
+    @Autowired
+    private ActivoMapper activoMapper;
+
+    @Operation(summary = "Listar todos los activos")
     @GetMapping("/listaTodos")
-    public ResponseEntity<List<Activo>> listaTodos() {
-        return ResponseEntity.ok(activoService.listaTodos());
-    }
-
-    @Operation(summary = "Registrar nuevo activo", description = "Crea un equipo en la base de datos con auditoría inicial.")
-    @PostMapping("/registraActivo")
-    public ResponseEntity<Map<String, Object>> registra(@RequestBody Activo obj) {
-        log.info(">>> registraActivo >>> " + obj.getNombre());
-        Map<String, Object> salida = new HashMap<>();
-        try {
-            obj.setIdActivo(0); // Forzamos creación
-            Activo objSalida = activoService.insertaActualizaActivo(obj);
-            salida.put("mensaje", "Activo '" + objSalida.getNombre() + "' registrado correctamente.");
-        } catch (Exception e) {
-            log.error("Error en registro: " + e.getMessage());
-            salida.put("mensaje", "Error: " + e.getMessage());
-        }
-        return ResponseEntity.ok(salida);
-    }
-
-    @Operation(summary = "Actualizar activo existente", description = "Actualiza los datos de un equipo. Se requiere el ID del activo.")
-    @PutMapping("/actualizaActivo")
-    public ResponseEntity<Map<String, Object>> actualiza(@RequestBody Activo obj) {
-        log.info(">>> actualizaActivo >>> ID: " + obj.getIdActivo());
-        Map<String, Object> salida = new HashMap<>();
-        try {
-            // Validamos que el ID exista para no crear uno nuevo por error
-            if (obj.getIdActivo() == null || obj.getIdActivo() == 0) {
-                salida.put("mensaje", "Error: ID de activo no válido.");
-                return ResponseEntity.badRequest().body(salida);
-            }
-
-            Activo objSalida = activoService.insertaActualizaActivo(obj);
-            salida.put("mensaje", "Activo '" + objSalida.getNombre() + "' actualizado correctamente.");
-        } catch (Exception e) {
-            log.error("Error en actualización: " + e.getMessage());
-            salida.put("mensaje", "Error al actualizar: " + e.getMessage());
-        }
-        return ResponseEntity.ok(salida);
-    }
-
-    @Operation(summary = "Consulta Dinámica", description = "Búsqueda avanzada usando parámetros opcionales. Use -1 para omitir un filtro.")
-    @GetMapping("/consultaDinamica")
-    public ResponseEntity<List<Activo>> consulta(
-            @Parameter(description = "Nombre parcial") @RequestParam(defaultValue = "") String vnombre,
-            @Parameter(description = "Número de serie exacto") @RequestParam(defaultValue = "-1") String vserie,
-            @Parameter(description = "ID del Tipo (DataCatalogo)") @RequestParam(defaultValue = "-1") int vtipo,
-            @Parameter(description = "Estado (1: Activo, 0: Inactivo)") @RequestParam(defaultValue = "-1") int vestado){
-
-        log.info(">>> consultaDinamica Activo >>> nombre: " + vnombre);
-        List<Activo> lista = activoService.consultaDinamica("%" + vnombre.toLowerCase() + "%", vserie, vtipo, vestado);
+    public ResponseEntity<List<ActivoResponseDTO>> listaTodos() {
+        List<ActivoResponseDTO> lista = activoService.listaTodos().stream()
+                .map(activoMapper::toResponse)
+                .toList();
         return ResponseEntity.ok(lista);
     }
 
-    @Operation(summary = "Eliminar activo", description = "Borrado físico del equipo por su ID.")
+    @Operation(summary = "Registrar nuevo activo")
+    @PostMapping("/registraActivo")
+    public ResponseEntity<MensajeDTO> registra(@Valid @RequestBody ActivoCreateRequestDTO dto) {
+        log.info(">>> registraActivo >>> " + dto.nombre());
+        var guardado = activoService.insertaActualizaActivo(activoMapper.toEntity(dto));
+        return ResponseEntity.ok(new MensajeDTO(
+                "Activo '" + guardado.getNombre() + "' registrado correctamente."));
+    }
+
+    @Operation(summary = "Actualizar activo existente")
+    @PutMapping("/actualizaActivo")
+    public ResponseEntity<MensajeDTO> actualiza(@Valid @RequestBody ActivoUpdateRequestDTO dto) {
+        log.info(">>> actualizaActivo >>> ID: " + dto.idActivo());
+        var actualizado = activoService.insertaActualizaActivo(activoMapper.toEntity(dto));
+        return ResponseEntity.ok(new MensajeDTO(
+                "Activo '" + actualizado.getNombre() + "' actualizado correctamente."));
+    }
+
+    @Operation(summary = "Consulta Dinámica")
+    @GetMapping("/consultaDinamica")
+    public ResponseEntity<List<ActivoResponseDTO>> consulta(
+            @Parameter(description = "Nombre parcial") @RequestParam(defaultValue = "") String vnombre,
+            @Parameter(description = "Número de serie exacto") @RequestParam(defaultValue = "-1") String vserie,
+            @Parameter(description = "ID del Tipo (DataCatalogo)") @RequestParam(defaultValue = "-1") int vtipo,
+            @Parameter(description = "Estado (1: Operativo, 0: Fuera de servicio)") @RequestParam(defaultValue = "-1") int vestado) {
+
+        log.info(">>> consultaDinamica Activo >>> nombre: " + vnombre);
+        List<ActivoResponseDTO> lista = activoService.consultaDinamica(
+                        "%" + vnombre.toLowerCase() + "%", vserie, vtipo, vestado).stream()
+                .map(activoMapper::toResponse)
+                .toList();
+        return ResponseEntity.ok(lista);
+    }
+
+    @Operation(summary = "Eliminar activo")
     @DeleteMapping("/eliminaActivo/{id}")
-    public ResponseEntity<Map<String, Object>> elimina(@PathVariable int id) {
+    public ResponseEntity<MensajeDTO> elimina(@PathVariable int id) {
         log.info(">>> eliminaActivo >>> ID: " + id);
-        Map<String, Object> salida = new HashMap<>();
-        try {
-            activoService.eliminaActivo(id);
-            salida.put("mensaje", "Eliminación exitosa.");
-            return ResponseEntity.ok(salida);
-        } catch (Exception e) {
-            log.error("Error al eliminar activo: " + e.getMessage());
-            salida.put("mensaje", "No se puede eliminar: el activo tiene tickets registrados.");
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(salida);
-        }
+        activoService.eliminaActivo(id);
+        return ResponseEntity.ok(new MensajeDTO("Eliminación exitosa."));
     }
 }

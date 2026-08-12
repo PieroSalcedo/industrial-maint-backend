@@ -27,9 +27,17 @@ MaintPro resuelve un problema real de plantas industriales: **centralizar el con
 
 ### Roles y permisos
 
-- **Administrador (`ROLE_ADMIN`):** puede eliminar activos (`DELETE /url/activo/**`).
-- **Usuarios autenticados:** acceso a consultas, registro y actualización de activos y tickets.
-- **Público (sin token):** login, catálogos `/url/util/**` y documentación Swagger.
+| Acción | ROLE_ADMIN (supervisor) | ROLE_TECH (técnico) |
+|--------|-------------------------|---------------------|
+| Consultar activos y tickets | Sí | Sí (tickets: solo asignados) |
+| Crear / editar / eliminar activos | Sí | No (403) |
+| Registrar / eliminar tickets | Sí | No (403) |
+| Actualizar ticket (estado) | Sí | Sí (solo asignados) |
+| Listar técnicos (`/util/listaTecnico`) | Sí | No (403) |
+| Catálogos `/util/lista*` | JWT requerido | JWT requerido |
+
+- **Público (sin token):** login (`/url/auth/**`) y Swagger.
+- **JWT secret:** configurar `jwt.secret` en `application.properties` o `.env` (no hardcodear en código).
 
 ---
 
@@ -56,12 +64,12 @@ MaintPro resuelve un problema real de plantas industriales: **centralizar el con
 │              Angular Frontend (:4200)                 │
 │         HttpInterceptor (Bearer JWT)                │
 └────────────────────────┬────────────────────────────┘
-                         │ REST API
+                         │ REST API (JSON / DTOs)
                          ▼
 ┌─────────────────────────────────────────────────────┐
 │         Spring Boot Backend (:8080/url)              │
-│  /auth  /activo  /ticket  /util                      │
-│  JWT Filter │ Spring Security │ JPA Repositories    │
+│  Controller (DTO) → Mapper → Service → Repository   │
+│  JWT Filter │ Spring Security │ JPA Entities        │
 └────────────────────────┬────────────────────────────┘
                          │
                          ▼
@@ -69,6 +77,18 @@ MaintPro resuelve un problema real de plantas industriales: **centralizar el con
 │           PostgreSQL — industrial_db                 │
 └─────────────────────────────────────────────────────┘
 ```
+
+### Capa DTO (contrato de API)
+
+Los **controllers no exponen entidades JPA**. Usan DTOs con Jakarta Validation:
+
+| Tipo | Ejemplos | Uso |
+|------|----------|-----|
+| **Request** | `ActivoCreateRequestDTO`, `TicketUpdateRequestDTO` | Entrada validada con `@Valid` |
+| **Response** | `ActivoResponseDTO`, `TicketResponseDTO` | Salida JSON estable para el frontend |
+| **Mapper** | `ActivoMapper`, `TicketMapper` | Traducción DTO ↔ entidad en la capa de servicio |
+
+Errores de validación y negocio se centralizan en `GlobalExceptionHandler` → `{ "mensaje": "..." }`.
 
 ### Modelo de datos principal
 
@@ -136,9 +156,21 @@ Base URL: `http://localhost:8080/url`
 |--------|------|-------------|
 | GET | `/listaTodos` | Lista completa de activos |
 | GET | `/consultaDinamica` | Búsqueda con filtros opcionales |
-| POST | `/registraActivo` | Crear activo |
-| PUT | `/actualizaActivo` | Actualizar activo (requiere `idActivo`) |
+| POST | `/registraActivo` | Crear activo (**solo `ROLE_ADMIN`**) |
+| PUT | `/actualizaActivo` | Actualizar activo (**solo `ROLE_ADMIN`**) |
 | DELETE | `/eliminaActivo/{id}` | Borrado físico (**solo `ROLE_ADMIN`**) |
+
+**POST `/registraActivo` — body (Request DTO):**
+```json
+{
+  "nombre": "Compresor A",
+  "numeroSerie": "SN-001",
+  "idTipoActivo": 1,
+  "idUsuarioRegistro": 1
+}
+```
+
+**GET `/consultaDinamica` — response:** lista de `ActivoResponseDTO` con `tipoActivo`, auditoría y estado.
 
 **Consulta dinámica — parámetros:**
 
@@ -153,8 +185,22 @@ Base URL: `http://localhost:8080/url`
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| POST | `/registraTicket` | Crear ticket de mantenimiento |
+| POST | `/registraTicket` | Crear ticket (**solo `ROLE_ADMIN`**) |
+| PUT | `/actualizaTicket` | Actualizar ticket (supervisor: todos los campos; técnico: solo estado en asignados) |
+| DELETE | `/eliminaTicket/{id}` | Eliminar ticket (**solo `ROLE_ADMIN`**) |
 | GET | `/consultaDinamica` | Búsqueda con filtros opcionales |
+
+**POST `/registraTicket` — body (Request DTO):**
+```json
+{
+  "descripcion": "Fuga de aceite",
+  "idActivo": 1,
+  "idPrioridad": 4,
+  "idEstadoTicket": 7,
+  "idUsuarioTecnico": 2,
+  "idUsuarioRegistro": 1
+}
+```
 
 **Consulta dinámica — parámetros:**
 
@@ -164,14 +210,19 @@ Base URL: `http://localhost:8080/url`
 | `vactivo` | int | `-1` | ID del activo |
 | `vprioridad` | int | `-1` | ID de prioridad |
 | `vestado` | int | `-1` | ID de estado del ticket |
+| `vtecnico` | int | `-1` | ID técnico (solo supervisor) |
+| `vtipoActivo` | int | `-1` | Tipo de activo |
+| `vpendientes` | int | `-1` | `1`=abiertos/reparación, `0`=cerrados |
+| `vfechaDesde` / `vfechaHasta` | string | `-1` | Filtro por fecha (`yyyy-MM-dd`) |
 
-### Util — `/url/util` (público)
+### Util — `/url/util`
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/listaTipoActivo` | Tipos de activo (catálogo 1) |
-| GET | `/listaPrioridad` | Prioridades (catálogo 2) |
-| GET | `/listaEstadoTicket` | Estados de ticket (catálogo 3) |
+| Método | Ruta | Auth | Descripción |
+|--------|------|------|-------------|
+| GET | `/listaTipoActivo` | JWT | Tipos de activo (catálogo 1) |
+| GET | `/listaPrioridad` | JWT | Prioridades (catálogo 2) |
+| GET | `/listaEstadoTicket` | JWT | Estados de ticket (catálogo 3) |
+| GET | `/listaTecnico` | **`ROLE_ADMIN`** | Técnicos activos para asignación |
 
 ### Swagger UI
 
@@ -249,9 +300,10 @@ DB_PORT=5432
 DB_NAME=industrial_db
 DB_USERNAME=postgres
 DB_PASSWORD=tu_password
+JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
 ```
 
-> **Importante:** El archivo `.env` no se sube al repositorio. Solo se versiona `.env.example`.
+> **Importante:** El archivo `.env` no se sube al repositorio. Spring Boot lo carga vía `spring.config.import=optional:file:.env[.properties]`.
 
 ### 4. Compilar y ejecutar
 
@@ -278,13 +330,14 @@ La API quedará disponible en **http://localhost:8080/url**.
 ### 5. Verificar que funciona
 
 ```bash
-# Catálogos (público, sin token)
-curl http://localhost:8080/url/util/listaTipoActivo
-
 # Login
 curl -X POST http://localhost:8080/url/auth/login \
   -H "Content-Type: application/json" \
   -d "{\"login\":\"admin\",\"password\":\"admin2026\"}"
+
+# Catálogos (requieren JWT)
+curl http://localhost:8080/url/util/listaTipoActivo \
+  -H "Authorization: Bearer <token>"
 ```
 
 ---
@@ -311,8 +364,10 @@ src/main/java/com/maint/industrial_backend/
 │   ├── ActivoController.java           # CRUD + consulta dinámica
 │   ├── TicketController.java           # Registro + consulta tickets
 │   └── UtilController.java             # Catálogos auxiliares
-├── dto/                                # LoginRequest, JwtResponse, etc.
-├── entity/                             # Entidades JPA (11 clases)
+├── controller/                         # Solo DTOs (@Valid), sin entidades JPA
+├── dto/                                # Request / Response DTOs
+├── mapper/                             # ActivoMapper, TicketMapper
+├── entity/                             # Entidades JPA (capa de persistencia)
 ├── repository/                         # Spring Data JPA
 ├── service/ + service/impl/            # Lógica de negocio
 ├── security/
@@ -335,13 +390,14 @@ src/main/resources/
 
 - **Autenticación stateless** con JWT (sin sesión en servidor).
 - **Contraseñas** hasheadas con BCrypt.
-- **CORS** configurado para `http://localhost:4200` (frontend Angular).
-- **Eliminación de activos** restringida a usuarios con `ROLE_ADMIN`.
+- **CORS** configurado para `http://localhost:4200`.
+- **RBAC en filter chain:** escritura de activos/tickets y `listaTecnico` solo `ROLE_ADMIN`.
+- **JWT secret** externalizado en `jwt.secret` (`application.properties` / `.env`).
 - Endpoints protegidos requieren header:
   ```
   Authorization: Bearer <token>
   ```
-- Rutas públicas: `/url/auth/**`, `/url/util/**`, Swagger.
+- Rutas públicas: `/url/auth/**`, Swagger. Catálogos `/url/util/lista*` requieren JWT.
 
 ---
 
@@ -365,8 +421,9 @@ El origen CORS permitido está en `AppSettings.URL_CROSS_ORIGIN` (`http://localh
 |----------|----------|
 | Error de conexión a PostgreSQL | Verificar que PostgreSQL esté activo y que `.env` tenga credenciales correctas |
 | `401 Unauthorized` | Token JWT expirado o ausente. Hacer login de nuevo |
-| `403 Forbidden` al eliminar activo | Solo `ROLE_ADMIN` puede usar `DELETE /url/activo/**` |
-| Error al eliminar activo con tickets | El activo tiene tickets vinculados; eliminar o reasignar tickets primero |
+| `403 Forbidden` | Rol insuficiente (ej. técnico intentando crear activo) |
+| `409 Conflict` | Número de serie duplicado o activo con tickets al eliminar |
+| Error al eliminar activo con tickets | El activo tiene historial; no se puede borrar físicamente |
 | CORS desde el frontend | Verificar que el frontend corra en `:4200` o actualizar `SecurityConfig` y `AppSettings` |
 | LazyInitializationException en JSON | Las entidades usan `@JsonIgnoreProperties` en relaciones lazy |
 

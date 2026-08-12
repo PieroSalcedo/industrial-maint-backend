@@ -21,8 +21,27 @@ public class ActivoServiceImpl implements ActivoService {
 
     @Override
     public Activo insertaActualizaActivo(Activo obj) {
-        // Al usar save(), JPA detecta si el ID existe para hacer UPDATE o INSERT.
+        validarNumeroSerieUnico(obj);
         return repository.save(obj);
+    }
+
+    private void validarNumeroSerieUnico(Activo obj) {
+        String serie = obj.getNumeroSerie();
+        if (serie == null || serie.isBlank()) {
+            throw new IllegalArgumentException("Debe indicar el número de serie.");
+        }
+
+        serie = serie.trim();
+        obj.setNumeroSerie(serie);
+
+        Integer id = obj.getIdActivo();
+        boolean duplicado = (id == null || id == 0)
+                ? repository.existsByNumeroSerieNormalizado(serie)
+                : repository.existsByNumeroSerieNormalizadoAndIdActivoNot(serie, id);
+
+        if (duplicado) {
+            throw new IllegalStateException("Ya existe un activo con ese número de serie.");
+        }
     }
 
     @Override

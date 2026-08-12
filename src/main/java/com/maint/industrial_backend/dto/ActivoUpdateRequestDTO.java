@@ -3,9 +3,8 @@ package com.maint.industrial_backend.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-// Usado para Registrar y Actualizar activos.
-// Solo enviamos los IDs de las relaciones para no sobrecargar el JSON.
-public record ActivoDTO(
+public record ActivoUpdateRequestDTO(
+        @NotNull(message = "El ID del activo es obligatorio")
         Integer idActivo,
 
         @NotBlank(message = "El nombre es obligatorio")
@@ -15,7 +14,8 @@ public record ActivoDTO(
         String numeroSerie,
 
         @NotNull(message = "El tipo de activo es obligatorio")
-        Integer idTipoActivo, // FK a DataCatalogo
+        Integer idTipoActivo,
 
-        Integer idUsuarioRegistro // Para la auditoría
+        @NotNull(message = "El estado es obligatorio")
+        Integer estado
 ) {}

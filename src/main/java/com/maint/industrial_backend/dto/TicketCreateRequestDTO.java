@@ -3,9 +3,7 @@ package com.maint.industrial_backend.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-public record TicketDTO(
-        Integer idTicket,
-
+public record TicketCreateRequestDTO(
         @NotBlank(message = "La descripción es obligatoria")
         String descripcion,
 
@@ -13,11 +11,12 @@ public record TicketDTO(
         Integer idActivo,
 
         @NotNull(message = "Debe definir la prioridad")
-        Integer idPrioridad, // FK a DataCatalogo
+        Integer idPrioridad,
 
-        @NotNull(message = "Debe definir el estado inicial")
-        Integer idEstadoTicket, // FK a DataCatalogo
+        Integer idEstadoTicket,
 
-        Integer idUsuarioTecnico, // Puede ser nulo al inicio
-        Integer idUsuarioRegistro // Auditoría: quién reporta
+        Integer idUsuarioTecnico,
+
+        @NotNull(message = "El usuario de registro es obligatorio")
+        Integer idUsuarioRegistro
 ) {}

@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
@@ -16,8 +17,11 @@ import io.jsonwebtoken.security.Keys;
 public class JwtProvider {
     private final static Logger logger = LoggerFactory.getLogger(JwtProvider.class);
 
-    private String secret = "maintpro_secret_key_2026_industrial_asset_management_system_secure_key_512bits";
-    private int expiration = 36000;
+    @Value("${jwt.secret}")
+    private String secret;
+
+    @Value("${jwt.expiration:36000}")
+    private int expiration;
 
     // Método auxiliar para obtener la clave firmada correctamente en bytes
     private Key getSigningKey() {

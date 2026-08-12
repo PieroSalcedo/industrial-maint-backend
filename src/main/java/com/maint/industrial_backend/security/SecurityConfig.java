@@ -37,7 +37,6 @@ public class SecurityConfig {
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        // Ahora sí, pasamos la interfaz. Cursor dejará de marcarlo en rojo.
         authProvider.setUserDetailsService(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
@@ -70,25 +69,33 @@ public class SecurityConfig {
                 // 4. Gestión de sesión sin estado
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // 5. REGLAS DE AUTORIZACIÓN
+                // 5. REGLAS DE AUTORIZACIÓN (orden: más específico primero)
                 .authorizeHttpRequests(auth -> auth
-                        // Rutas Públicas (Auth y Util)
                         .requestMatchers("/url/auth/**").permitAll()
-                        .requestMatchers("/url/util/**").permitAll()
 
-                        // DESBLOQUEO DE SWAGGER / OPENAPI
-                        .requestMatchers("/v3/api-docs/**").permitAll()   // Definición JSON
-                        .requestMatchers("/swagger-ui/**").permitAll()    // Recursos UI
-                        .requestMatchers("/swagger-ui.html").permitAll() // Redirección principal
+                        .requestMatchers("/v3/api-docs/**").permitAll()
+                        .requestMatchers("/swagger-ui/**").permitAll()
+                        .requestMatchers("/swagger-ui.html").permitAll()
 
-                        // RESTRICCIÓN DE ELIMINACIÓN: Solo ADMIN puede borrar activos y tickets
+                        // Catálogos: requieren JWT (sin datos sensibles)
+                        .requestMatchers(
+                                "/url/util/listaTipoActivo",
+                                "/url/util/listaPrioridad",
+                                "/url/util/listaEstadoTicket"
+                        ).authenticated()
+
+                        // Técnicos con datos personales: solo supervisor
+                        .requestMatchers("/url/util/listaTecnico").hasAuthority("ROLE_ADMIN")
+
+                        // Activos: escritura solo supervisor
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/url/activo/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.PUT, "/url/activo/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/url/activo/**").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/url/ticket/**").hasAuthority("ROLE_ADMIN")
 
-                        // Solo supervisor registra tickets
+                        // Tickets: registrar y eliminar solo supervisor
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/url/ticket/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/url/ticket/registraTicket").hasAuthority("ROLE_ADMIN")
 
-                        // El resto de la API requiere autenticación
                         .anyRequest().authenticated()
                 );
 

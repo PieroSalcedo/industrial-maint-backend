@@ -192,20 +192,24 @@ sequenceDiagram
 ### Permisos por rol
 
 | Acción | ROLE_ADMIN | ROLE_TECH |
-|--------|------------|--------------|
-| Ver activos y tickets | Sí | Sí |
-| Crear / editar activos | Sí | Sí |
-| **Eliminar activos** | **Sí** | **No** (403 en backend) |
-| Registrar tickets | Sí | Sí |
-| Ver dashboard | Sí | Sí |
+|--------|------------|-----------|
+| Ver activos y tickets | Sí | Sí (tickets: solo asignados) |
+| Crear / editar / eliminar activos | Sí | No (403) |
+| Registrar / eliminar tickets | Sí | No (403) |
+| Actualizar estado de ticket asignado | Sí | Sí |
+| Ver dashboard e historial | Sí | No |
+| Listar técnicos | Sí | No (403) |
 
-La restricción de eliminación está en `SecurityConfig.java`:
+Restricciones en `SecurityConfig.java`:
 
 ```java
+.requestMatchers(HttpMethod.POST, "/url/activo/**").hasAuthority("ROLE_ADMIN")
+.requestMatchers(HttpMethod.PUT, "/url/activo/**").hasAuthority("ROLE_ADMIN")
 .requestMatchers(HttpMethod.DELETE, "/url/activo/**").hasAuthority("ROLE_ADMIN")
+.requestMatchers("/url/util/listaTecnico").hasAuthority("ROLE_ADMIN")
 ```
 
-El frontend oculta el botón eliminar si el JWT no incluye `ROLE_ADMIN`.
+El frontend oculta acciones según `ROLE_ADMIN` en el JWT; el backend **también** las valida en la filter chain y en servicios.
 
 ---
 

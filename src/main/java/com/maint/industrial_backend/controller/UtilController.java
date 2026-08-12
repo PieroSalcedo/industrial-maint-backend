@@ -1,6 +1,7 @@
 package com.maint.industrial_backend.controller;
 
 import com.maint.industrial_backend.entity.DataCatalogo;
+import com.maint.industrial_backend.entity.Usuario;
 import com.maint.industrial_backend.service.UtilService;
 import com.maint.industrial_backend.util.AppSettings;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,5 +35,11 @@ public class UtilController {
     @GetMapping("/listaEstadoTicket")
     public ResponseEntity<List<DataCatalogo>> listaEstadoTicket() {
         return ResponseEntity.ok(service.listaDataCatalogo(AppSettings.CATALOGO_ESTADO_TICKET));
+    }
+
+    @Operation(summary = "Listar técnicos", description = "Lista técnicos activos para asignación de tickets.")
+    @GetMapping("/listaTecnico")
+    public ResponseEntity<List<Usuario>> listaTecnico() {
+        return ResponseEntity.ok(service.listaTecnico());
     }
 }

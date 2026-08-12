@@ -218,13 +218,15 @@ Representa un equipo o maquinaria industrial bajo control de mantenimiento.
 | `nombre` | Nombre descriptivo del equipo |
 | `numero_serie` | Identificador único de fábrica |
 | `id_tipo_activo` | FK a `data_catalogo` (catálogo 1) |
-| `estado` | `1` = operativo, `0` = dado de baja |
+| `estado` | `1` = operativo (disponible), `0` = fuera de servicio (parado por falla/mantenimiento) |
 | `fecha_registro` / `fecha_actualizacion` | Auditoría automática (`@PrePersist`, `@PreUpdate`) |
 | `id_usuario_registro` / `id_usuario_actualiza` | Usuario que creó/modificó |
 
-### Regla de negocio
+### Reglas de negocio
 
-No se puede eliminar un activo si tiene tickets vinculados (restricción FK en PostgreSQL).
+- No se puede eliminar un activo si tiene tickets vinculados (restricción FK en PostgreSQL).
+- Al registrar un ticket, el activo pasa automáticamente a **fuera de servicio** (`estado = 0`).
+- Al cerrar o eliminar tickets, el activo vuelve a **operativo** (`estado = 1`) solo si no quedan tickets en estado Abierto o En Reparación.
 
 ---
 

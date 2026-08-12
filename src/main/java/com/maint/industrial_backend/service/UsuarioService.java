@@ -12,6 +12,9 @@ public interface UsuarioService {
     // Recupera todos los usuarios.
     public abstract List<Usuario> listaUsuario();
 
+    // Recupera técnicos activos para asignación de tickets.
+    public abstract List<Usuario> listaTecnico();
+
     // Para el flujo de autenticación de Spring Security.
     public abstract Optional<Usuario> buscaPorLogin(String login);
 

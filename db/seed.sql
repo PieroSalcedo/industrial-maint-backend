@@ -2,8 +2,8 @@
 -- Ejecutar DESPUÉS de schema.sql, conectado a industrial_db.
 --
 -- Credenciales demo:
---   admin   / admin2026   → ROLE_ADMIN
---   tecnico / tecnico2026 → ROLE_TECH
+--   admin   / admin2026   → ROLE_ADMIN (Supervisor de Mantenimiento)
+--   tecnico / tecnico2026 → ROLE_TECH  (Técnico de campo)
 --
 -- Contraseñas hasheadas con BCrypt (Spring Security).
 -- Para regenerar: ejecutar EncoderPassword.java en el backend.
@@ -35,8 +35,8 @@ INSERT INTO data_catalogo (id_data_catalogo, descripcion, id_catalogo) VALUES
 -- ============================================================
 
 INSERT INTO rol (id_rol, nombre, descripcion, estado) VALUES
-    (1, 'ROLE_ADMIN', 'Administrador General',    1),
-    (2, 'ROLE_TECH',  'Técnico de Mantenimiento', 1);
+    (1, 'ROLE_ADMIN', 'Supervisor de Mantenimiento', 1),
+    (2, 'ROLE_TECH',  'Técnico de Mantenimiento',    1);
 
 -- ============================================================
 -- OPCIONES DE MENÚ
@@ -54,10 +54,10 @@ INSERT INTO opcion (id_opcion, nombre, ruta, tipo, estado) VALUES
 -- ============================================================
 
 INSERT INTO usuario (id_usuario, nombres, apellidos, dni, login, password, correo, estado) VALUES
-    (1, 'Admin',   'MaintPro', '11111111', 'admin',
+    (1, 'Supervisor', 'MaintPro', '11111111', 'admin',
      '$2a$10$IUWTjcD7NQnQBcQn0oSZYunBJkGryX24qLB1jFFThRcdGna1P4s.y',
      'admin@maintpro.com', 1),
-    (2, 'Tecnico', 'Juan',     '22222222', 'tecnico',
+    (2, 'Tecnico',    'Juan',     '22222222', 'tecnico',
      '$2a$10$3Gjq.H1B3QFQPkJ.I7YxGuDnXEykz7ZhI6ls94IvLBWX5GBYIdKmy',
      'juan@maintpro.com', 1);
 
@@ -90,9 +90,9 @@ INSERT INTO activo (
 -- ============================================================
 
 INSERT INTO ticket_mantenimiento (
-    id_ticket, descripcion, id_activo, id_prioridad, id_estado_ticket
+    id_ticket, descripcion, id_activo, id_prioridad, id_estado_ticket, id_usuario_tecnico, id_usuario_registro
 ) VALUES
-    (1, 'se quemo el carro eqd', 3, 6, 7);
+    (1, 'se quemo el carro eqd', 3, 6, 7, 2, 1);
 
 -- ============================================================
 -- REINICIO DE SECUENCIAS (SERIAL)

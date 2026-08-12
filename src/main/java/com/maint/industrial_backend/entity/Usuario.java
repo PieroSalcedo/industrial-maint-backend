@@ -1,5 +1,6 @@
 package com.maint.industrial_backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,6 +17,7 @@ public class Usuario {
     private String apellidos;
     private String dni;
     private String login;
+    @JsonIgnore
     private String password;
     private String correo;
     private Integer estado;

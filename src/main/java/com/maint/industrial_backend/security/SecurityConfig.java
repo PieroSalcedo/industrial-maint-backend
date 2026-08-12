@@ -81,8 +81,12 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**").permitAll()    // Recursos UI
                         .requestMatchers("/swagger-ui.html").permitAll() // Redirección principal
 
-                        // RESTRICCIÓN DE ELIMINACIÓN: Solo ADMIN puede borrar activos
+                        // RESTRICCIÓN DE ELIMINACIÓN: Solo ADMIN puede borrar activos y tickets
                         .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/url/activo/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/url/ticket/**").hasAuthority("ROLE_ADMIN")
+
+                        // Solo supervisor registra tickets
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/url/ticket/registraTicket").hasAuthority("ROLE_ADMIN")
 
                         // El resto de la API requiere autenticación
                         .anyRequest().authenticated()

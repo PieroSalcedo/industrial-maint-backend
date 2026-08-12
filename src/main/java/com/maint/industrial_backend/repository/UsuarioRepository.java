@@ -36,4 +36,11 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
             "where r.idRol = ur.rol.idRol " +
             "and ur.usuario.idUsuario = ?1")
     public abstract List<Rol> traerRolesDeUsuario(int idUsuario);
+
+    @Query("select u from Usuario u, UsuarioHasRol ur, Rol r " +
+            "where u.idUsuario = ur.usuario.idUsuario " +
+            "and ur.rol.idRol = r.idRol " +
+            "and r.nombre = 'ROLE_TECH' " +
+            "and u.estado = 1")
+    public abstract List<Usuario> traerTecnicos();
 }

@@ -10,7 +10,17 @@ public class AppSettings {
     public static final int CATALOGO_PRIORIDAD = 2;
     public static final int CATALOGO_ESTADO_TICKET = 3;
 
-    // Estados lógicos
-    public static final int ACTIVO = 1;
-    public static final int INACTIVO = 0;
+    // Estados del activo (disponibilidad operativa)
+    public static final int ACTIVO_OPERATIVO = 1;
+    public static final int ACTIVO_FUERA_SERVICIO = 0;
+
+    /** @deprecated usar {@link #ACTIVO_OPERATIVO} */
+    public static final int ACTIVO = ACTIVO_OPERATIVO;
+    /** @deprecated usar {@link #ACTIVO_FUERA_SERVICIO} */
+    public static final int INACTIVO = ACTIVO_FUERA_SERVICIO;
+
+    // Estados de ticket (data_catalogo catálogo 3)
+    public static final int ESTADO_TICKET_ABIERTO = 7;
+    public static final int ESTADO_TICKET_EN_REPARACION = 8;
+    public static final int ESTADO_TICKET_CERRADO = 9;
 }

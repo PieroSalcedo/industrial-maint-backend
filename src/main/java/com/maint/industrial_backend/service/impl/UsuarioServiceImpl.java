@@ -23,6 +23,11 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
 
     @Override
+    public List<Usuario> listaTecnico() {
+        return repository.traerTecnicos();
+    }
+
+    @Override
     public Optional<Usuario> buscaPorLogin(String login) {
         return repository.findByLogin(login);
     }

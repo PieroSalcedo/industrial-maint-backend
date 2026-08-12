@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-public class TickerServiceImpl implements TicketService {
+public class TicketServiceImpl implements TicketService {
 
     private static final LocalDateTime FECHA_MIN = LocalDateTime.of(1970, 1, 1, 0, 0);
     private static final LocalDateTime FECHA_MAX = LocalDateTime.of(9999, 12, 31, 23, 59, 59);

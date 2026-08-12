@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.apachecommons.CommonsLog;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -91,9 +92,11 @@ public class ActivoController {
         try {
             activoService.eliminaActivo(id);
             salida.put("mensaje", "Eliminación exitosa.");
+            return ResponseEntity.ok(salida);
         } catch (Exception e) {
-            salida.put("mensaje", "Error: El registro está relacionado a tickets.");
+            log.error("Error al eliminar activo: " + e.getMessage());
+            salida.put("mensaje", "No se puede eliminar: el activo tiene tickets registrados.");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(salida);
         }
-        return ResponseEntity.ok(salida);
     }
 }

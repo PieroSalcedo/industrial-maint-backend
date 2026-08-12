@@ -60,12 +60,10 @@ public class TicketController {
             @Parameter(description = "Fecha hasta (yyyy-MM-dd) o -1") @RequestParam(defaultValue = "-1") String vfechaHasta) {
 
         int filtroTecnico = SecurityUtils.isAdmin() ? vtecnico : -1;
-        String fechaDesde = "-1".equals(vfechaDesde) ? "-1" : vfechaDesde + " 00:00:00";
-        String fechaHasta = "-1".equals(vfechaHasta) ? "-1" : vfechaHasta + " 23:59:59";
 
         List<TicketMantenimiento> lista = ticketService.consultaDinamica(
                 "%" + vdesc.toLowerCase() + "%", vactivo, vprioridad, vestado, filtroTecnico,
-                vtipoActivo, vpendientes, fechaDesde, fechaHasta);
+                vtipoActivo, vpendientes, vfechaDesde, vfechaHasta);
         return ResponseEntity.ok(lista);
     }
 

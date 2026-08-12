@@ -14,10 +14,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class TickerServiceImpl implements TicketService {
+
+    private static final LocalDateTime FECHA_MIN = LocalDateTime.of(1970, 1, 1, 0, 0);
+    private static final LocalDateTime FECHA_MAX = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
 
     @Autowired
     private TicketMantenimientoRepository repository;
@@ -108,7 +112,17 @@ public class TickerServiceImpl implements TicketService {
         }
         return repository.consultaDinamica(
                 desc, idActivo, idPrioridad, idEstado, filtroTecnico,
-                idTipoActivo, soloPendientes, fechaDesde, fechaHasta);
+                idTipoActivo, soloPendientes, parseFecha(fechaDesde, true), parseFecha(fechaHasta, false));
+    }
+
+    private LocalDateTime parseFecha(String fecha, boolean inicioDelDia) {
+        if (fecha == null || "-1".equals(fecha) || fecha.isBlank()) {
+            return inicioDelDia ? FECHA_MIN : FECHA_MAX;
+        }
+        if (fecha.length() == 10) {
+            return LocalDateTime.parse(fecha + (inicioDelDia ? "T00:00:00" : "T23:59:59"));
+        }
+        return LocalDateTime.parse(fecha.replace(" ", "T"));
     }
 
     private void validarTicketAsignadoAlTecnico(TicketMantenimiento ticket, int idTecnico) {
